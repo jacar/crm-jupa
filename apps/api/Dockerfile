@@ -7,8 +7,7 @@ RUN apk add --no-cache \
       freetype \
       harfbuzz \
       ca-certificates \
-      ttf-freefont \
-      openssl
+      ttf-freefont
 
 WORKDIR /app
 
