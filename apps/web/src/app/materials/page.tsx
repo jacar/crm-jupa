@@ -104,7 +104,7 @@ export default function MaterialsPage() {
     setEditing(Material);
     setForm({
       name: Material.name,
-      sku: Material.reference,
+      reference: Material.reference,
       description: Material.description,
       price: String(Material.price),
       cost: String(Material.cost),
