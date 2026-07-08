@@ -23,6 +23,7 @@ RUN npm install
 COPY . .
 
 # Generar Prisma
+ENV NODE_OPTIONS="--max-old-space-size=2048"
 RUN cd apps/api && npx prisma generate
 
 # Construir API
@@ -30,3 +31,4 @@ RUN npm run build --workspace=@crm/api
 
 EXPOSE 4000
 CMD [ "npm", "run", "start:prod", "--workspace=@crm/api" ]
+

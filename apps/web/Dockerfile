@@ -13,7 +13,9 @@ RUN npm install
 COPY . .
 
 # Construir Web
+ENV NODE_OPTIONS="--max-old-space-size=2048"
 RUN npm run build --workspace=@crm/web
 
 EXPOSE 3000
 CMD [ "npm", "run", "start", "--workspace=@crm/web" ]
+
