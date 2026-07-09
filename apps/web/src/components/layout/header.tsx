@@ -27,7 +27,7 @@ export function Header() {
           <img 
             src="https://jupaarquitectura.com/img/logo.svg" 
             alt="JUPA Arquitectura" 
-            className="h-7 md:h-8" 
+            className="h-10 md:h-12" 
             style={{ filter: 'brightness(0) invert(1)' }}
           />
         </Link>
