@@ -115,6 +115,12 @@ const ROLES: { value: string; label: string; description: string; permissions: s
     description: 'Acceso limitado a proyectos asignados, facturación y comunicación con el equipo.',
     permissions: ['Ver proyectos asignados', 'Ver facturas', 'Descargar documentos', 'Comunicación con el equipo'],
   },
+  {
+    value: 'VISOR',
+    label: 'Visor',
+    description: 'Acceso de solo lectura a la información del sistema.',
+    permissions: ['Ver clientes', 'Ver oportunidades', 'Ver reportes', 'Ver dashboard'],
+  },
 ];
 
 const ROLE_BADGE: Record<string, 'default' | 'destructive' | 'warning' | 'success' | 'secondary' | 'outline'> = {
@@ -126,6 +132,7 @@ const ROLE_BADGE: Record<string, 'default' | 'destructive' | 'warning' | 'succes
   DESIGNER: 'secondary',
   ACCOUNTING: 'warning',
   CLIENT: 'outline',
+  VISOR: 'outline',
 };
 
 export default function SettingsPage() {

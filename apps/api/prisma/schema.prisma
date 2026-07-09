@@ -16,6 +16,7 @@ enum Role {
   DESIGNER   @map("designer")
   ACCOUNTING @map("accounting")
   CLIENT     @map("client")
+  VISOR      @map("visor")
 }
 
 enum LeadStatus {
