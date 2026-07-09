@@ -90,7 +90,7 @@ export class MaterialsService {
 
       if (firstAdmin) {
         await this.notificationsService.create({
-          type: 'INVENTORY_ALERT',
+          type: 'SYSTEM',
           title: 'Alerta de Inventario Bajo',
           message: `El material "${material.name}" en la ubicación "${material.location}" tiene un stock de ${material.stock}, por debajo del mínimo de ${material.minStock}.`,
           userId: firstAdmin.id,
