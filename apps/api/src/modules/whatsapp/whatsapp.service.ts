@@ -1,5 +1,5 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { Client, LocalAuth } from 'whatsapp-web.js';
+import { Client, LocalAuth, MessageMedia } from 'whatsapp-web.js';
 import * as qrcode from 'qrcode-terminal';
 import { WhatsappGateway } from './whatsapp.gateway';
 
@@ -85,7 +85,7 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
       this.initialize(); // Re-inicializar para generar nuevo QR
     });
 
-    this.client.on('message', (msg) => {
+    this.client.on('message', async (msg) => {
       this.logger.log(`Mensaje recibido de ${msg.from}: ${msg.body}`);
       this.gateway.emitMessage({
         id: msg.id._serialized,
@@ -93,6 +93,18 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
         body: msg.body,
         timestamp: msg.timestamp,
       });
+
+      // Auto-reply logic
+      const text = msg.body.toLowerCase();
+      if (text.includes('cotización') || text.includes('cotizacion') || text.includes('información') || text.includes('informacion')) {
+        const replyText = "Hola, gracias por contactarnos. Para poder generarte una cotización precisa, por favor indícanos tu nombre, correo y una breve descripción de tu proyecto o los materiales que necesitas. ¡En breve un asesor de Jupa Arquitectura te atenderá!";
+        try {
+          await this.client.sendMessage(msg.from, replyText);
+          this.logger.log(`Auto-respuesta enviada a ${msg.from}`);
+        } catch (e) {
+          this.logger.error(`Error enviando auto-respuesta a ${msg.from}`, e);
+        }
+      }
     });
 
     this.client.initialize().catch((err) => {
@@ -111,6 +123,16 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
     // Formatear el número si es necesario
     const chatId = to.includes('@') ? to : `${to.replace(/[^0-9]/g, '')}@c.us`;
     await this.client.sendMessage(chatId, message);
+    return { success: true };
+  }
+
+  public async sendMedia(to: string, filePath: string, caption?: string) {
+    if (this.status !== 'connected') {
+      throw new Error('WhatsApp no está conectado');
+    }
+    const chatId = to.includes('@') ? to : `${to.replace(/[^0-9]/g, '')}@c.us`;
+    const media = MessageMedia.fromFilePath(filePath);
+    await this.client.sendMessage(chatId, media, { caption });
     return { success: true };
   }
 

@@ -8,6 +8,8 @@ import { Bell, Moon, Sun, Menu } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 
+import { GrokAssistant } from '@/components/ai/GrokAssistant';
+
 export function Header() {
   const { user } = useAuth();
   const { toggle } = useSidebar();
@@ -27,13 +29,15 @@ export function Header() {
           <img 
             src="https://jupaarquitectura.com/img/logo.svg" 
             alt="JUPA Arquitectura" 
-            className="h-10 md:h-12" 
+            className="h-16 md:h-24" 
             style={{ filter: 'brightness(0) invert(1)' }}
           />
         </Link>
       </div>
 
       <div className="flex items-center gap-2">
+        <GrokAssistant />
+        
         <Link href="/dashboard">
           <Button variant="ghost" size="icon" className="text-white hover:text-white/80 hover:bg-white/10">
             <svg

@@ -302,21 +302,29 @@ model Opportunity {
   @@map("opportunities")
 }
 
+enum InventoryLocation {
+  BODEGA   @map("bodega")
+  OBRA     @map("obra")
+  GENERAL  @map("general")
+}
+
 model Material {
-  id          String   @id @default(uuid())
+  id          String            @id @default(uuid())
   name        String
-  description String?  @db.Text
-  reference   String?  @unique @map("reference")
+  description String?           @db.Text
+  reference   String?           @unique @map("reference")
   brand       String?
-  price       Decimal  @default(0) @db.Decimal(15, 2)
-  cost        Decimal? @default(0) @db.Decimal(15, 2)
+  price       Decimal           @default(0) @db.Decimal(15, 2)
+  cost        Decimal?          @default(0) @db.Decimal(15, 2)
   category    String?
-  unit        String?  @default("unit")
-  stock       Int      @default(0)
-  isActive    Boolean  @default(true) @map("is_active")
+  unit        String?           @default("unit")
+  stock       Int               @default(0)
+  minStock    Int               @default(5) @map("min_stock")
+  location    InventoryLocation @default(GENERAL)
+  isActive    Boolean           @default(true) @map("is_active")
   image       String?
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
 
   supplierId String?  @map("supplier_id")
   supplier   Company? @relation(fields: [supplierId], references: [id])

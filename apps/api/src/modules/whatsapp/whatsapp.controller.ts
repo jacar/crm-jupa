@@ -39,6 +39,20 @@ export class WhatsappController {
     }
   }
 
+  @Post('send-media')
+  @ApiOperation({ summary: 'Enviar archivo multimedia a un número de WhatsApp' })
+  async sendMedia(@Body() body: { to: string; filePath: string; caption?: string }) {
+    if (!body.to || !body.filePath) {
+      throw new HttpException('Faltan parámetros (to, filePath)', HttpStatus.BAD_REQUEST);
+    }
+    try {
+      return await this.whatsappService.sendMedia(body.to, body.filePath, body.caption);
+    } catch (error) {
+      console.error('Error in sendMedia:', error);
+      throw new HttpException(error.message || 'Error desconocido al enviar archivo', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   @Post('logout')
   @ApiOperation({ summary: 'Cerrar sesión de WhatsApp' })
   async logout() {

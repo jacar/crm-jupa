@@ -240,7 +240,7 @@ export default function QuotesPage() {
   const handleExportPdf = async (id: number) => {
     setPdfLoading(id);
     try {
-      const response = await api.get(`/quotes/${id}/pdf`, { responseType: 'blob' });
+      const response = await api.get(`/quotes/${id}/pdf/download`, { responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -262,11 +262,26 @@ export default function QuotesPage() {
     }
     setWaLoading(quote.id);
     try {
-      const message = `Hola ${quote.contact.firstName}, adjuntamos la cotización ${quote.number} - "${quote.title}" por un total de ${formatCurrency(quote.total)}. ¡Quedamos atentos a sus comentarios!`;
-      await api.post('/whatsapp/send', { to: quote.contact.phone, message });
-      toast.success('Cotización enviada por WhatsApp');
+      // 1. Generate PDF
+      const pdfRes = await api.post(`/quotes/${quote.id}/pdf`);
+      const filePath = pdfRes.data?.filePath;
+
+      if (!filePath) {
+        throw new Error('No se pudo generar el archivo PDF');
+      }
+
+      // 2. Send via WhatsApp
+      const caption = `Hola ${quote.contact.firstName}, adjuntamos la cotización ${quote.number} - "${quote.title}" por un total de ${formatCurrency(quote.total)}. ¡Quedamos atentos a sus comentarios!`;
+      await api.post('/whatsapp/send-media', { 
+        to: quote.contact.phone, 
+        filePath: filePath, 
+        caption 
+      });
+
+      toast.success('Cotización enviada por WhatsApp con PDF');
       handleStatusChange(quote.id, 'SENT');
-    } catch {
+    } catch (e) {
+      console.error(e);
       toast.error('Error al enviar WhatsApp. ¿Está el dispositivo vinculado?');
     } finally {
       setWaLoading(null);

@@ -10,6 +10,7 @@ import {
   Query,
   UseGuards,
   Request,
+  Res,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -66,9 +67,16 @@ export class QuotesController {
   }
 
   @Post(':id/pdf')
-  @ApiOperation({ summary: 'Generate PDF for quote (placeholder)' })
+  @ApiOperation({ summary: 'Generate PDF for quote' })
   generatePdf(@Param('id') id: string) {
     return this.quotesService.generatePdf(id);
+  }
+
+  @Get(':id/pdf/download')
+  @ApiOperation({ summary: 'Download PDF for quote' })
+  async downloadPdf(@Param('id') id: string, @Request() req: any, @Res() res: any) {
+    const { filePath } = await this.quotesService.generatePdf(id);
+    return res.download(filePath);
   }
 
   @Post(':id/send-email')

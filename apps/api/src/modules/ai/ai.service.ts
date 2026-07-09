@@ -132,4 +132,50 @@ ${senderName}`,
       tone: 'professional',
     };
   }
+
+  async searchConstructionPrices(query: string) {
+    this.logger.log(`AI Request: searchConstructionPrices - query: ${query}`);
+    const apiKey = process.env.XAI_API_KEY || '';
+    
+    try {
+      const response = await fetch('https://api.x.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert assistant for a construction CRM. The user will ask for estimated prices for construction materials or services. Provide realistic, concise estimates in local currency or USD, with a disclaimer that prices vary by region and supplier. Format the response clearly.'
+            },
+            {
+              role: 'user',
+              content: query
+            }
+          ],
+          model: 'grok-beta',
+          stream: false,
+          temperature: 0
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Grok API Error: ${response.status} - ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return {
+        answer: data.choices[0].message.content,
+        success: true
+      };
+    } catch (error) {
+      this.logger.error('Failed to query Grok API', error);
+      return {
+        answer: 'Hubo un error al consultar la API de Grok. Por favor, intenta de nuevo más tarde.',
+        success: false
+      };
+    }
+  }
 }

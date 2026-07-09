@@ -20,6 +20,9 @@ interface Material {
   cost: number;
   category: string;
   unit: string;
+  stock: number;
+  minStock: number;
+  location: string;
   isActive: boolean;
   createdAt: string;
 }
@@ -38,6 +41,9 @@ const emptyForm = {
   cost: '',
   category: '',
   unit: '',
+  stock: '0',
+  minStock: '5',
+  location: 'GENERAL',
   isActive: true,
 };
 
@@ -66,7 +72,7 @@ export default function MaterialsPage() {
       setMaterials(data?.data ?? data?.data?.data ?? []);
       setMeta(data?.meta ?? data?.data?.meta ?? { total: 0, page: 1, limit: 10 });
     } catch {
-      toast.error('Error al cargar Materialos');
+      toast.error('Error al cargar Materiales');
     } finally {
       setLoading(false);
     }
@@ -104,12 +110,15 @@ export default function MaterialsPage() {
     setEditing(Material);
     setForm({
       name: Material.name,
-      reference: Material.reference,
-      description: Material.description,
+      reference: Material.reference || '',
+      description: Material.description || '',
       price: String(Material.price),
       cost: String(Material.cost),
-      category: Material.category,
-      unit: Material.unit,
+      category: Material.category || '',
+      unit: Material.unit || '',
+      stock: String(Material.stock),
+      minStock: String(Material.minStock),
+      location: Material.location || 'GENERAL',
       isActive: Material.isActive,
     });
     setModalOpen(true);
@@ -123,18 +132,20 @@ export default function MaterialsPage() {
         ...form,
         price: Number(form.price),
         cost: Number(form.cost),
+        stock: Number(form.stock),
+        minStock: Number(form.minStock),
       };
       if (editing) {
         await api.patch(`/Materials/${editing.id}`, payload);
-        toast.success('Materialo actualizado');
+        toast.success('Material actualizado');
       } else {
         await api.post('/Materials', payload);
-        toast.success('Materialo creado');
+        toast.success('Material creado');
       }
       setModalOpen(false);
       fetchMaterials();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Error al guardar Materialo');
+      toast.error(error?.response?.data?.message || 'Error al guardar Material');
     } finally {
       setSaving(false);
     }
@@ -145,11 +156,11 @@ export default function MaterialsPage() {
     setDeleting(true);
     try {
       await api.delete(`/Materials/${deleteId}`);
-      toast.success('Materialo eliminado');
+      toast.success('Material eliminado');
       setDeleteId(null);
       fetchMaterials();
     } catch {
-      toast.error('Error al eliminar Materialo');
+      toast.error('Error al eliminar Material');
     } finally {
       setDeleting(false);
     }
@@ -164,11 +175,11 @@ export default function MaterialsPage() {
           <Button variant="outline" size="sm" onClick={() => window.location.href = '/dashboard'}>
             Volver al inicio
           </Button>
-          <h1 className="text-3xl font-bold tracking-tight">Materialos</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Materiales</h1>
         </div>
         <Button onClick={openCreate}>
           <Plus className="mr-2 h-4 w-4" />
-          Nuevo Materialo
+          Nuevo Material
         </Button>
       </div>
 
@@ -202,10 +213,9 @@ export default function MaterialsPage() {
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="text-left p-3 font-medium">Nombre</th>
-                  <th className="text-left p-3 font-medium">Referencia</th>
-                  <th className="text-left p-3 font-medium">Categoría</th>
+                  <th className="text-left p-3 font-medium">Ubicación</th>
+                  <th className="text-right p-3 font-medium">Stock</th>
                   <th className="text-right p-3 font-medium">Precio</th>
-                  <th className="text-right p-3 font-medium">Costo</th>
                   <th className="text-center p-3 font-medium">Estado</th>
                   <th className="text-right p-3 font-medium">Acciones</th>
                 </tr>
@@ -230,12 +240,18 @@ export default function MaterialsPage() {
                         <div className="flex items-center gap-2">
                           <Package className="h-4 w-4 text-muted-foreground shrink-0" />
                           {Material.name}
+                          {Material.stock <= Material.minStock && (
+                            <span className="flex h-2 w-2 rounded-full bg-red-500 animate-pulse ml-2" title="Stock bajo" />
+                          )}
                         </div>
                       </td>
-                      <td className="p-3 text-muted-foreground">{Material.reference}</td>
-                      <td className="p-3">{Material.category || '—'}</td>
+                      <td className="p-3 text-muted-foreground">{Material.location}</td>
+                      <td className="p-3 text-right">
+                        <span className={Material.stock <= Material.minStock ? 'text-red-500 font-bold' : ''}>
+                          {Material.stock} {Material.unit}
+                        </span>
+                      </td>
                       <td className="p-3 text-right font-medium">{formatCurrency(Material.price)}</td>
-                      <td className="p-3 text-right text-muted-foreground">{formatCurrency(Material.cost)}</td>
                       <td className="p-3 text-center">
                         <Badge variant={Material.isActive ? 'success' : 'secondary'}>
                           {Material.isActive ? 'Activo' : 'Inactivo'}
@@ -298,9 +314,9 @@ export default function MaterialsPage() {
 
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-lg rounded-xl border bg-card p-6 shadow-lg">
+          <div className="w-full max-w-lg rounded-xl border bg-card p-6 shadow-lg overflow-y-auto max-h-[90vh]">
             <h2 className="mb-4 text-lg font-semibold">
-              {editing ? 'Editar Materialo' : 'Nuevo Materialo'}
+              {editing ? 'Editar Material' : 'Nuevo Material'}
             </h2>
             <form onSubmit={handleSave} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -387,6 +403,40 @@ export default function MaterialsPage() {
                   />
                 </div>
               </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Ubicación</label>
+                  <Select
+                    value={form.location}
+                    onChange={(e) => setForm({ ...form, location: e.target.value })}
+                    options={[
+                      { value: 'GENERAL', label: 'General' },
+                      { value: 'BODEGA', label: 'Bodega' },
+                      { value: 'OBRA', label: 'Obra' },
+                    ]}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Stock</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={form.stock}
+                    onChange={(e) => setForm({ ...form, stock: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Stock Mínimo</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={form.minStock}
+                    onChange={(e) => setForm({ ...form, minStock: e.target.value })}
+                  />
+                </div>
+              </div>
+
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"

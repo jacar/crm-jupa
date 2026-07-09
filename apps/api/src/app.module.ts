@@ -25,6 +25,8 @@ import { AiModule } from './modules/ai/ai.module';
 import { PipelineModule } from './modules/pipeline/pipeline.module';
 import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
 
+import { PdfModule } from './modules/pdf/pdf.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -52,6 +54,7 @@ import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
     AiModule,
     PipelineModule,
     WhatsappModule,
+    PdfModule,
   ],
 })
 export class AppModule {}

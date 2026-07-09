@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 
@@ -7,7 +8,10 @@ import { UpdateMaterialDto } from './dto/update-material.dto';
 export class MaterialsService {
   private readonly logger = new Logger(MaterialsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService
+  ) {}
 
   async create(dto: CreateMaterialDto) {
     const Material = await this.prisma.material.create({
@@ -69,12 +73,33 @@ export class MaterialsService {
   }
 
   async update(id: string, dto: UpdateMaterialDto) {
-    await this.findOne(id);
-    const Material = await this.prisma.material.update({
+    const oldMaterial = await this.findOne(id);
+    const material = await this.prisma.material.update({
       where: { id },
       data: dto,
     });
-    return Material;
+
+    // Check low stock
+    if (material.stock <= material.minStock && oldMaterial.stock > oldMaterial.minStock) {
+      this.logger.warn(`LOW STOCK ALERT: ${material.name} is at ${material.stock} (min: ${material.minStock})`);
+      
+      // Get an admin user to notify (in a real app, notify all users with INVENTORY_MANAGER role)
+      const firstAdmin = await this.prisma.user.findFirst({
+        where: { role: 'ADMIN' }
+      });
+
+      if (firstAdmin) {
+        await this.notificationsService.create({
+          type: 'INVENTORY_ALERT',
+          title: 'Alerta de Inventario Bajo',
+          message: `El material "${material.name}" en la ubicación "${material.location}" tiene un stock de ${material.stock}, por debajo del mínimo de ${material.minStock}.`,
+          userId: firstAdmin.id,
+          link: '/materials'
+        });
+      }
+    }
+
+    return material;
   }
 
   async remove(id: string) {

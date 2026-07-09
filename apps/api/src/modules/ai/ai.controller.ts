@@ -51,4 +51,10 @@ export class AiController {
   generateEmail(@Body() emailContext: any) {
     return this.aiService.generateEmail(emailContext);
   }
+
+  @Post('search-construction-prices')
+  @ApiOperation({ summary: 'Search construction prices using Grok AI' })
+  searchConstructionPrices(@Body('query') query: string) {
+    return this.aiService.searchConstructionPrices(query);
+  }
 }

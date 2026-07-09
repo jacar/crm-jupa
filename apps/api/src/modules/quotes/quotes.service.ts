@@ -4,6 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
+import { PdfService } from '../pdf/pdf.service';
 import { QuoteStatus, Prisma } from '@prisma/client';
 import { CreateQuoteDto } from './dto/create-quote.dto';
 import { UpdateQuoteDto } from './dto/update-quote.dto';
@@ -26,7 +27,10 @@ const quoteInclude = {
 export class QuotesService {
   private readonly TAX_RATE = 0.19;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly pdfService: PdfService,
+  ) {}
 
   private async generateNumber(): Promise<string> {
     const count = await this.prisma.quote.count();
@@ -241,8 +245,9 @@ export class QuotesService {
   }
 
   async generatePdf(id: string) {
-    await this.findOne(id);
-    return { message: 'PDF generation placeholder', quoteId: id };
+    const quote = await this.findOne(id);
+    const filePath = await this.pdfService.generateQuotePdf(quote);
+    return { message: 'PDF generado exitosamente', quoteId: id, filePath };
   }
 
   async sendEmail(id: string) {
