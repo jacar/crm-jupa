@@ -25,6 +25,13 @@ export class WhatsappController {
     return await this.whatsappService.getMessages(id);
   }
 
+  @Get('chats/:id/profile-pic')
+  @ApiOperation({ summary: 'Obtener foto de perfil de un chat específico' })
+  async getProfilePic(@Param('id') id: string) {
+    const url = await this.whatsappService.getProfilePicUrl(id);
+    return { url };
+  }
+
   @Post('send')
   @ApiOperation({ summary: 'Enviar un mensaje a un número de WhatsApp' })
   async sendMessage(@Body() body: { to: string; message: string }) {

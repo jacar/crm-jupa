@@ -10,6 +10,7 @@ import { api } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { formatDateTime } from '@/lib/utils';
 import Link from 'next/link';
+import { LogOut } from 'lucide-react';
 
 interface WAMessage {
   id: string;
@@ -36,9 +37,10 @@ export default function WhatsappInboxPage() {
       }
     }).catch(() => setStatus('disconnected'));
 
-    const newSocket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/whatsapp', {
-      transports: ['websocket'],
-    });
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const wsUrl = apiUrl.replace('/api', '') + '/whatsapp';
+    
+    const newSocket = io(wsUrl);
 
     newSocket.on('status', (newStatus) => {
       setStatus(newStatus);
@@ -52,7 +54,7 @@ export default function WhatsappInboxPage() {
         if (prev.some(m => m.id === msg.id)) return prev;
         return [...prev, msg].sort((a, b) => a.timestamp - b.timestamp);
       });
-      if (!activeChat) setActiveChat(msg.from);
+      setActiveChat((prev) => prev ? prev : msg.from);
       fetchChats();
     });
 
@@ -61,12 +63,20 @@ export default function WhatsappInboxPage() {
     return () => {
       newSocket.disconnect();
     };
-  }, [activeChat]);
+  }, []);
 
   const fetchChats = async () => {
     try {
       const { data } = await api.get('/whatsapp/chats');
       setChatList(data);
+      // Fetch profile pics asynchronously
+      data.forEach((chat: any) => {
+        api.get(`/whatsapp/chats/${chat.id}/profile-pic`).then((res) => {
+          if (res.data.url) {
+            setChatList((prev) => prev.map(c => c.id === chat.id ? { ...c, profilePicUrl: res.data.url } : c));
+          }
+        }).catch(() => {});
+      });
     } catch (e) {
       console.error(e);
     }
@@ -96,6 +106,16 @@ export default function WhatsappInboxPage() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await api.post('/whatsapp/logout');
+      toast.success('Sesión de WhatsApp cerrada');
+      setStatus('disconnected');
+    } catch {
+      toast.error('Error al cerrar sesión');
+    }
+  };
+
   const getDisplayName = (id: string) => {
     const chat = chatList.find(c => c.id === id);
     return chat && chat.name ? chat.name : id.replace('@c.us', '');
@@ -105,20 +125,27 @@ export default function WhatsappInboxPage() {
     <div className="h-[calc(100vh-8rem)] flex flex-col space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">WhatsApp Inbox</h1>
-        {status !== 'connected' && (
-          <Link href="/settings/whatsapp">
-            <Button variant="outline" className="text-orange-600 border-orange-200 bg-orange-50">
-              <ShieldAlert className="h-4 w-4 mr-2" />
-              Requiere Vinculación (Ver QR)
+        <div className="flex items-center gap-2">
+          {status !== 'connected' ? (
+            <Link href="/settings/whatsapp">
+              <Button variant="outline" className="text-orange-600 border-orange-200 bg-orange-50">
+                <ShieldAlert className="h-4 w-4 mr-2" />
+                Requiere Vinculación (Ver QR)
+              </Button>
+            </Link>
+          ) : (
+            <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Cerrar Sesión
             </Button>
-          </Link>
-        )}
+          )}
+        </div>
       </div>
 
       <Card className="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-3">
         {/* Sidebar */}
-        <div className="border-r bg-muted/20 flex flex-col h-full">
-          <div className="p-4 border-b bg-muted/40 font-medium">Chats Recientes</div>
+        <div className="border-r bg-muted/20 flex flex-col h-full min-h-0 overflow-hidden">
+          <div className="p-4 border-b bg-muted/40 font-medium z-10 shadow-sm">Chats Recientes</div>
           <div className="flex-1 overflow-y-auto">
             {chatList.length === 0 ? (
               <div className="p-8 text-center text-sm text-muted-foreground">
@@ -159,7 +186,7 @@ export default function WhatsappInboxPage() {
         </div>
 
         {/* Chat Area */}
-        <div className="md:col-span-2 flex flex-col h-full bg-[#E5DDD5]/20">
+        <div className="md:col-span-2 flex flex-col h-full min-h-0 overflow-hidden bg-[#E5DDD5]/20">
           {activeChat ? (
             <>
               <div className="p-4 border-b bg-white flex items-center gap-3 shadow-sm z-10">
@@ -215,10 +242,9 @@ export default function WhatsappInboxPage() {
                     placeholder="Escribe un mensaje..."
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
-                    disabled={status !== 'connected'}
-                    className="flex-1 bg-slate-100 border-none focus-visible:ring-1 focus-visible:ring-slate-300"
+                    className="flex-1 bg-slate-100 text-slate-900 placeholder:text-slate-500 border-none focus-visible:ring-1 focus-visible:ring-slate-300"
                   />
-                  <Button type="submit" disabled={!replyText.trim() || status !== 'connected'} size="icon">
+                  <Button type="submit" disabled={!replyText.trim()} size="icon">
                     <Send className="h-4 w-4" />
                   </Button>
                 </form>

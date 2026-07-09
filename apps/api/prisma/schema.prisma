@@ -7,6 +7,531 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id                    String          @id @default(uuid())
+  email                 String          @unique
+  password              String
+  firstName             String          @map("first_name")
+  lastName              String          @map("last_name")
+  phone                 String?
+  avatar                String?
+  role                  Role            @default(SALES)
+  isActive              Boolean         @default(true) @map("is_active")
+  lastLogin             DateTime?       @map("last_login")
+  refreshToken          String?         @map("refresh_token")
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @updatedAt @map("updated_at")
+  companyId             String?         @map("company_id")
+  activities            Activity[]
+  auditLogs             AuditLog[]
+  calendarEvents        CalendarEvent[]
+  uploadedFiles         File[]          @relation("FileUploader")
+  createdInvoices       Invoice[]       @relation("InvoiceCreator")
+  assignedLeads         Lead[]          @relation("UserAssignedLeads")
+  sentMessages          Message[]       @relation("MessageSender")
+  notifications         Notification[]
+  assignedOpportunities Opportunity[]   @relation("UserAssignedOpportunities")
+  pipelineStages        PipelineStage[]
+  createdQuotes         Quote[]         @relation("QuoteCreator")
+  tasks                 Task[]
+  company               Company?        @relation(fields: [companyId], references: [id])
+
+  @@map("users")
+}
+
+model Company {
+  id            String        @id @default(uuid())
+  name          String
+  legalName     String?       @map("legal_name")
+  taxId         String?       @map("tax_id")
+  industry      String?
+  segment       String?
+  website       String?
+  phone         String?
+  email         String?
+  address       String?
+  city          String?
+  state         String?
+  country       String?
+  postalCode    String?       @map("postal_code")
+  notes         String?
+  logo          String?
+  isClient      Boolean       @default(false) @map("is_client")
+  isSupplier    Boolean       @default(false) @map("is_supplier")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  contacts      Contact[]
+  invoices      Invoice[]
+  leads         Lead[]
+  materials     Material[]
+  opportunities Opportunity[]
+  projects      Project[]
+  quotes        Quote[]
+  users         User[]
+
+  @@index([name])
+  @@index([segment])
+  @@index([industry])
+  @@map("companies")
+}
+
+model Contact {
+  id         String     @id @default(uuid())
+  firstName  String     @map("first_name")
+  lastName   String     @map("last_name")
+  email      String?
+  phone      String?
+  mobile     String?
+  position   String?
+  department String?
+  avatar     String?
+  notes      String?
+  tags       String[]
+  isActive   Boolean    @default(true) @map("is_active")
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+  companyId  String?    @map("company_id")
+  activities Activity[]
+  company    Company?   @relation(fields: [companyId], references: [id])
+  leads      Lead[]
+  messages   Message[]
+  quotes     Quote[]
+
+  @@index([firstName, lastName])
+  @@index([email])
+  @@index([companyId])
+  @@map("contacts")
+}
+
+model Lead {
+  id          String       @id @default(uuid())
+  name        String
+  description String?
+  source      String?
+  campaign    String?
+  score       Int          @default(0)
+  status      LeadStatus   @default(NEW)
+  probability Int          @default(0)
+  convertedAt DateTime?    @map("converted_at")
+  notes       String?
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  companyId   String?      @map("company_id")
+  contactId   String?      @map("contact_id")
+  assignedTo  String?      @map("assigned_to")
+  assignedBy  User?        @relation("UserAssignedLeads", fields: [assignedTo], references: [id])
+  company     Company?     @relation(fields: [companyId], references: [id])
+  contact     Contact?     @relation(fields: [contactId], references: [id])
+  opportunity Opportunity?
+
+  @@index([status])
+  @@index([assignedTo])
+  @@index([companyId])
+  @@index([createdAt])
+  @@map("leads")
+}
+
+model Opportunity {
+  id                String           @id @default(uuid())
+  name              String
+  description       String?
+  amount            Decimal?         @default(0) @db.Decimal(15, 2)
+  probability       Int              @default(0)
+  stage             OpportunityStage @default(CONTACTO_INICIAL)
+  expectedCloseDate DateTime?        @map("expected_close_date")
+  closedAt          DateTime?        @map("closed_at")
+  lossReason        String?          @map("loss_reason")
+  notes             String?
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+  companyId         String?          @map("company_id")
+  assignedTo        String?          @map("assigned_to")
+  leadId            String?          @unique @map("lead_id")
+  activities        Activity[]
+  calendarEvents    CalendarEvent[]
+  assignedBy        User?            @relation("UserAssignedOpportunities", fields: [assignedTo], references: [id])
+  company           Company?         @relation(fields: [companyId], references: [id])
+  lead              Lead?            @relation(fields: [leadId], references: [id])
+  pipelineStages    PipelineStage[]
+  quotes            Quote[]
+  tasks             Task[]
+
+  @@index([stage])
+  @@index([assignedTo])
+  @@index([companyId])
+  @@index([expectedCloseDate])
+  @@map("opportunities")
+}
+
+model Material {
+  id           String            @id @default(uuid())
+  name         String
+  description  String?
+  reference    String?           @unique @map("reference")
+  brand        String?
+  price        Decimal           @default(0) @db.Decimal(15, 2)
+  cost         Decimal?          @default(0) @db.Decimal(15, 2)
+  category     String?
+  unit         String?           @default("unit")
+  stock        Int               @default(0)
+  isActive     Boolean           @default(true) @map("is_active")
+  image        String?
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+  supplierId   String?           @map("supplier_id")
+  location     InventoryLocation @default(GENERAL)
+  minStock     Int               @default(5) @map("min_stock")
+  invoiceItems InvoiceItem[]
+  supplier     Company?          @relation(fields: [supplierId], references: [id])
+  quoteItems   QuoteItem[]
+
+  @@index([category])
+  @@index([name])
+  @@index([supplierId])
+  @@map("materials")
+}
+
+model Quote {
+  id            String       @id @default(uuid())
+  number        String       @unique
+  title         String?
+  subtotal      Decimal      @default(0) @db.Decimal(15, 2)
+  tax           Decimal      @default(0) @db.Decimal(15, 2)
+  taxRate       Decimal      @default(0) @map("tax_rate") @db.Decimal(5, 2)
+  discount      Decimal      @default(0) @db.Decimal(15, 2)
+  total         Decimal      @default(0) @db.Decimal(15, 2)
+  status        QuoteStatus  @default(DRAFT)
+  validUntil    DateTime?    @map("valid_until")
+  notes         String?
+  terms         String?
+  pdfUrl        String?      @map("pdf_url")
+  acceptedAt    DateTime?    @map("accepted_at")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  companyId     String?      @map("company_id")
+  contactId     String?      @map("contact_id")
+  opportunityId String?      @map("opportunity_id")
+  createdById   String       @map("created_by")
+  invoices      Invoice[]
+  projects      Project[]
+  items         QuoteItem[]
+  company       Company?     @relation(fields: [companyId], references: [id])
+  contact       Contact?     @relation(fields: [contactId], references: [id])
+  createdBy     User         @relation("QuoteCreator", fields: [createdById], references: [id])
+  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id])
+
+  @@index([number])
+  @@index([status])
+  @@index([companyId])
+  @@index([opportunityId])
+  @@map("quotes")
+}
+
+model QuoteItem {
+  id         String   @id @default(uuid())
+  quantity   Int      @default(1)
+  unitPrice  Decimal  @default(0) @map("unit_price") @db.Decimal(15, 2)
+  total      Decimal  @default(0) @db.Decimal(15, 2)
+  quoteId    String   @map("quote_id")
+  materialId String   @map("material_id")
+  material   Material @relation(fields: [materialId], references: [id])
+  quote      Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@map("quote_items")
+}
+
+model Invoice {
+  id          String        @id @default(uuid())
+  number      String        @unique
+  subtotal    Decimal       @default(0) @db.Decimal(15, 2)
+  tax         Decimal       @default(0) @db.Decimal(15, 2)
+  taxRate     Decimal       @default(0) @map("tax_rate") @db.Decimal(5, 2)
+  discount    Decimal       @default(0) @db.Decimal(15, 2)
+  total       Decimal       @default(0) @db.Decimal(15, 2)
+  amountPaid  Decimal       @default(0) @map("amount_paid") @db.Decimal(15, 2)
+  status      InvoiceStatus @default(DRAFT)
+  dueDate     DateTime?     @map("due_date")
+  paidAt      DateTime?     @map("paid_at")
+  notes       String?
+  pdfUrl      String?       @map("pdf_url")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  companyId   String?       @map("company_id")
+  quoteId     String?       @map("quote_id")
+  createdById String        @map("created_by")
+  projectId   String?       @map("project_id")
+  items       InvoiceItem[]
+  company     Company?      @relation(fields: [companyId], references: [id])
+  createdBy   User          @relation("InvoiceCreator", fields: [createdById], references: [id])
+  project     Project?      @relation(fields: [projectId], references: [id])
+  quote       Quote?        @relation(fields: [quoteId], references: [id])
+  payments    Payment[]
+
+  @@index([number])
+  @@index([status])
+  @@index([companyId])
+  @@index([dueDate])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id         String   @id @default(uuid())
+  quantity   Int      @default(1)
+  unitPrice  Decimal  @default(0) @map("unit_price") @db.Decimal(15, 2)
+  total      Decimal  @default(0) @db.Decimal(15, 2)
+  invoiceId  String   @map("invoice_id")
+  materialId String   @map("material_id")
+  invoice    Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  material   Material @relation(fields: [materialId], references: [id])
+
+  @@map("invoice_items")
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  amount        Decimal       @db.Decimal(15, 2)
+  method        PaymentMethod @default(OTHER)
+  reference     String?
+  transactionId String?       @map("transaction_id")
+  notes         String?
+  paidAt        DateTime      @default(now()) @map("paid_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  invoiceId     String        @map("invoice_id")
+  invoice       Invoice       @relation(fields: [invoiceId], references: [id])
+
+  @@index([invoiceId])
+  @@index([paidAt])
+  @@map("payments")
+}
+
+model Activity {
+  id            String       @id @default(uuid())
+  type          ActivityType
+  subject       String
+  description   String?
+  result        String?
+  duration      Int?         @default(0)
+  scheduledAt   DateTime?    @map("scheduled_at")
+  completedAt   DateTime?    @map("completed_at")
+  isCompleted   Boolean      @default(false) @map("is_completed")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  contactId     String?      @map("contact_id")
+  opportunityId String?      @map("opportunity_id")
+  userId        String       @map("user_id")
+  contact       Contact?     @relation(fields: [contactId], references: [id])
+  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id])
+  user          User         @relation(fields: [userId], references: [id])
+
+  @@index([type])
+  @@index([userId])
+  @@index([contactId])
+  @@index([scheduledAt])
+  @@index([opportunityId])
+  @@map("activities")
+}
+
+model Task {
+  id            String       @id @default(uuid())
+  title         String
+  description   String?
+  priority      String       @default("medium")
+  dueDate       DateTime?    @map("due_date")
+  completedAt   DateTime?    @map("completed_at")
+  isCompleted   Boolean      @default(false) @map("is_completed")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  userId        String       @map("user_id")
+  opportunityId String?      @map("opportunity_id")
+  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id])
+  user          User         @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([dueDate])
+  @@index([isCompleted])
+  @@index([opportunityId])
+  @@map("tasks")
+}
+
+model Message {
+  id        String    @id @default(uuid())
+  channel   String
+  content   String
+  direction String    @default("outbound")
+  status    String    @default("sent")
+  sentAt    DateTime  @default(now()) @map("sent_at")
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  contactId String    @map("contact_id")
+  sentById  String    @map("sent_by")
+  contact   Contact   @relation(fields: [contactId], references: [id])
+  sentBy    User      @relation("MessageSender", fields: [sentById], references: [id])
+
+  @@index([contactId])
+  @@index([channel])
+  @@index([sentAt])
+  @@map("messages")
+}
+
+model CalendarEvent {
+  id             String       @id @default(uuid())
+  title          String
+  description    String?
+  location       String?
+  startDate      DateTime     @map("start_date")
+  endDate        DateTime     @map("end_date")
+  isAllDay       Boolean      @default(false) @map("is_all_day")
+  color          String?      @default("#3b82f6")
+  googleEventId  String?      @map("google_event_id")
+  outlookEventId String?      @map("outlook_event_id")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  userId         String       @map("user_id")
+  opportunityId  String?      @map("opportunity_id")
+  opportunity    Opportunity? @relation(fields: [opportunityId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([startDate])
+  @@index([opportunityId])
+  @@map("calendar_events")
+}
+
+model Project {
+  id          String       @id @default(uuid())
+  name        String
+  description String?
+  status      String       @default("pending")
+  phase       ProjectPhase @default(ANTEPROYECTO)
+  progress    Int          @default(0)
+  startDate   DateTime?    @map("start_date")
+  endDate     DateTime?    @map("end_date")
+  budget      Decimal?     @default(0) @db.Decimal(15, 2)
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  companyId   String       @map("company_id")
+  quoteId     String?      @map("quote_id")
+  invoices    Invoice[]
+  company     Company      @relation(fields: [companyId], references: [id])
+  quote       Quote?       @relation(fields: [quoteId], references: [id])
+
+  @@index([companyId])
+  @@index([status])
+  @@map("projects")
+}
+
+model PipelineStage {
+  id            String      @id @default(uuid())
+  name          String
+  order         Int
+  color         String?     @default("#3b82f6")
+  probability   Int         @default(0)
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  userId        String      @map("user_id")
+  opportunityId String      @map("opportunity_id")
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id])
+  user          User        @relation(fields: [userId], references: [id])
+
+  @@map("pipeline_stages")
+}
+
+model Notification {
+  id        String              @id @default(uuid())
+  type      NotificationType
+  title     String
+  message   String
+  channel   NotificationChannel @default(INTERNAL)
+  isRead    Boolean             @default(false) @map("is_read")
+  readAt    DateTime?           @map("read_at")
+  link      String?
+  createdAt DateTime            @default(now()) @map("created_at")
+  userId    String              @map("user_id")
+  user      User                @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model AutomationRule {
+  id          String            @id @default(uuid())
+  name        String
+  description String?
+  trigger     AutomationTrigger
+  action      AutomationAction
+  config      Json              @default("{}")
+  isActive    Boolean           @default(true) @map("is_active")
+  order       Int               @default(0)
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  @@index([trigger])
+  @@index([isActive])
+  @@map("automation_rules")
+}
+
+model Integration {
+  id        String    @id @default(uuid())
+  name      String
+  provider  String
+  config    Json      @default("{}")
+  isActive  Boolean   @default(true) @map("is_active")
+  lastSync  DateTime? @map("last_sync")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@index([provider])
+  @@map("integrations")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  action    String
+  entity    String
+  entityId  String?  @map("entity_id")
+  changes   Json?
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model File {
+  id           String       @id @default(uuid())
+  name         String
+  originalName String       @map("original_name")
+  mimeType     String       @map("mime_type")
+  size         Int
+  url          String
+  category     FileCategory @default(DOCUMENT)
+  version      Int          @default(1)
+  metadata     Json?        @default("{}")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+  uploadedById String       @map("uploaded_by")
+  uploadedBy   User         @relation("FileUploader", fields: [uploadedById], references: [id])
+
+  @@index([category])
+  @@index([uploadedById])
+  @@map("files")
+}
+
+model Tag {
+  id    String  @id @default(uuid())
+  name  String  @unique
+  color String? @default("#3b82f6")
+
+  @@map("tags")
+}
+
 enum Role {
   ADMIN      @map("admin")
   DIRECTOR   @map("director")
@@ -133,579 +658,8 @@ enum FileCategory {
   OTHER    @map("other")
 }
 
-model User {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  password     String
-  firstName    String    @map("first_name")
-  lastName     String    @map("last_name")
-  phone        String?
-  avatar       String?
-  role         Role      @default(SALES)
-  isActive     Boolean   @default(true) @map("is_active")
-  lastLogin    DateTime? @map("last_login")
-  refreshToken String?   @map("refresh_token")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
-
-  assignedLeads         Lead[]          @relation("UserAssignedLeads")
-  assignedOpportunities Opportunity[]   @relation("UserAssignedOpportunities")
-  tasks                 Task[]
-  activities            Activity[]
-  notifications         Notification[]
-  createdQuotes         Quote[]         @relation("QuoteCreator")
-  createdInvoices       Invoice[]       @relation("InvoiceCreator")
-  calendarEvents        CalendarEvent[]
-  auditLogs             AuditLog[]
-  sentMessages          Message[]       @relation("MessageSender")
-  pipelineStages        PipelineStage[]
-  uploadedFiles         File[]          @relation("FileUploader")
-
-  companyId String?  @map("company_id")
-  company   Company? @relation(fields: [companyId], references: [id])
-
-  @@map("users")
-}
-
-model Company {
-  id         String   @id @default(uuid())
-  name       String
-  legalName  String?  @map("legal_name")
-  taxId      String?  @map("tax_id")
-  industry   String?
-  segment    String?
-  website    String?
-  phone      String?
-  email      String?
-  address    String?
-  city       String?
-  state      String?
-  country    String?
-  postalCode String?  @map("postal_code")
-  notes      String?  @db.Text
-  logo       String?
-  isClient   Boolean  @default(false) @map("is_client")
-  isSupplier Boolean  @default(false) @map("is_supplier")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-
-  users         User[]
-  contacts      Contact[]
-  leads         Lead[]
-  opportunities Opportunity[]
-  quotes        Quote[]
-  invoices      Invoice[]
-  projects      Project[]
-  materials     Material[]
-
-  @@index([name])
-  @@index([segment])
-  @@index([industry])
-  @@map("companies")
-}
-
-model Contact {
-  id         String   @id @default(uuid())
-  firstName  String   @map("first_name")
-  lastName   String   @map("last_name")
-  email      String?
-  phone      String?
-  mobile     String?
-  position   String?
-  department String?
-  avatar     String?
-  notes      String?  @db.Text
-  tags       String[]
-  isActive   Boolean  @default(true) @map("is_active")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-
-  companyId String?  @map("company_id")
-  company   Company? @relation(fields: [companyId], references: [id])
-
-  leads      Lead[]
-  activities Activity[]
-  quotes     Quote[]
-  messages   Message[]
-
-  @@index([firstName, lastName])
-  @@index([email])
-  @@index([companyId])
-  @@map("contacts")
-}
-
-model Lead {
-  id          String     @id @default(uuid())
-  name        String
-  description String?    @db.Text
-  source      String?
-  campaign    String?
-  score       Int        @default(0)
-  status      LeadStatus @default(NEW)
-  probability Int        @default(0)
-  convertedAt DateTime?  @map("converted_at")
-  notes       String?    @db.Text
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
-
-  companyId String?  @map("company_id")
-  company   Company? @relation(fields: [companyId], references: [id])
-
-  contactId String?  @map("contact_id")
-  contact   Contact? @relation(fields: [contactId], references: [id])
-
-  assignedTo String? @map("assigned_to")
-  assignedBy User?   @relation("UserAssignedLeads", fields: [assignedTo], references: [id])
-
-  opportunity Opportunity?
-
-  @@index([status])
-  @@index([assignedTo])
-  @@index([companyId])
-  @@index([createdAt])
-  @@map("leads")
-}
-
-model Opportunity {
-  id                String           @id @default(uuid())
-  name              String
-  description       String?          @db.Text
-  amount            Decimal?         @default(0) @db.Decimal(15, 2)
-  probability       Int              @default(0)
-  stage             OpportunityStage @default(CONTACTO_INICIAL)
-  expectedCloseDate DateTime?        @map("expected_close_date")
-  closedAt          DateTime?        @map("closed_at")
-  lossReason        String?          @map("loss_reason") @db.Text
-  notes             String?          @db.Text
-  createdAt         DateTime         @default(now()) @map("created_at")
-  updatedAt         DateTime         @updatedAt @map("updated_at")
-
-  companyId String?  @map("company_id")
-  company   Company? @relation(fields: [companyId], references: [id])
-
-  assignedTo String? @map("assigned_to")
-  assignedBy User?   @relation("UserAssignedOpportunities", fields: [assignedTo], references: [id])
-
-  leadId String? @unique @map("lead_id")
-  lead   Lead?   @relation(fields: [leadId], references: [id])
-
-  quotes         Quote[]
-  tasks          Task[]
-  activities     Activity[]
-  pipelineStages PipelineStage[]
-  calendarEvents CalendarEvent[]
-
-  @@index([stage])
-  @@index([assignedTo])
-  @@index([companyId])
-  @@index([expectedCloseDate])
-  @@map("opportunities")
-}
-
 enum InventoryLocation {
-  BODEGA   @map("bodega")
-  OBRA     @map("obra")
-  GENERAL  @map("general")
-}
-
-model Material {
-  id          String            @id @default(uuid())
-  name        String
-  description String?           @db.Text
-  reference   String?           @unique @map("reference")
-  brand       String?
-  price       Decimal           @default(0) @db.Decimal(15, 2)
-  cost        Decimal?          @default(0) @db.Decimal(15, 2)
-  category    String?
-  unit        String?           @default("unit")
-  stock       Int               @default(0)
-  minStock    Int               @default(5) @map("min_stock")
-  location    InventoryLocation @default(GENERAL)
-  isActive    Boolean           @default(true) @map("is_active")
-  image       String?
-  createdAt   DateTime          @default(now()) @map("created_at")
-  updatedAt   DateTime          @updatedAt @map("updated_at")
-
-  supplierId String?  @map("supplier_id")
-  supplier   Company? @relation(fields: [supplierId], references: [id])
-
-  quoteItems   QuoteItem[]
-  invoiceItems InvoiceItem[]
-
-  @@index([category])
-  @@index([name])
-  @@index([supplierId])
-  @@map("materials")
-}
-
-model Quote {
-  id         String      @id @default(uuid())
-  number     String      @unique
-  title      String?
-  subtotal   Decimal     @default(0) @db.Decimal(15, 2)
-  tax        Decimal     @default(0) @db.Decimal(15, 2)
-  taxRate    Decimal     @default(0) @map("tax_rate") @db.Decimal(5, 2)
-  discount   Decimal     @default(0) @db.Decimal(15, 2)
-  total      Decimal     @default(0) @db.Decimal(15, 2)
-  status     QuoteStatus @default(DRAFT)
-  validUntil DateTime?   @map("valid_until")
-  notes      String?     @db.Text
-  terms      String?     @db.Text
-  pdfUrl     String?     @map("pdf_url") @db.Text
-  acceptedAt DateTime?   @map("accepted_at")
-  createdAt  DateTime    @default(now()) @map("created_at")
-  updatedAt  DateTime    @updatedAt @map("updated_at")
-
-  companyId String?  @map("company_id")
-  company   Company? @relation(fields: [companyId], references: [id])
-
-  contactId String?  @map("contact_id")
-  contact   Contact? @relation(fields: [contactId], references: [id])
-
-  opportunityId String?      @map("opportunity_id")
-  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id])
-
-  createdById String @map("created_by")
-  createdBy   User   @relation("QuoteCreator", fields: [createdById], references: [id])
-
-  items    QuoteItem[]
-  invoices Invoice[]
-  projects Project[]
-
-  @@index([number])
-  @@index([status])
-  @@index([companyId])
-  @@index([opportunityId])
-  @@map("quotes")
-}
-
-model QuoteItem {
-  id        String  @id @default(uuid())
-  quantity  Int     @default(1)
-  unitPrice Decimal @default(0) @map("unit_price") @db.Decimal(15, 2)
-  total     Decimal @default(0) @db.Decimal(15, 2)
-
-  quoteId String @map("quote_id")
-  quote   Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-
-  materialId String   @map("material_id")
-  material   Material @relation(fields: [materialId], references: [id])
-
-  @@map("quote_items")
-}
-
-model Invoice {
-  id         String        @id @default(uuid())
-  number     String        @unique
-  subtotal   Decimal       @default(0) @db.Decimal(15, 2)
-  tax        Decimal       @default(0) @db.Decimal(15, 2)
-  taxRate    Decimal       @default(0) @map("tax_rate") @db.Decimal(5, 2)
-  discount   Decimal       @default(0) @db.Decimal(15, 2)
-  total      Decimal       @default(0) @db.Decimal(15, 2)
-  amountPaid Decimal       @default(0) @map("amount_paid") @db.Decimal(15, 2)
-  status     InvoiceStatus @default(DRAFT)
-  dueDate    DateTime?     @map("due_date")
-  paidAt     DateTime?     @map("paid_at")
-  notes      String?       @db.Text
-  pdfUrl     String?       @map("pdf_url") @db.Text
-  createdAt  DateTime      @default(now()) @map("created_at")
-  updatedAt  DateTime      @updatedAt @map("updated_at")
-
-  companyId String?  @map("company_id")
-  company   Company? @relation(fields: [companyId], references: [id])
-
-  quoteId String? @map("quote_id")
-  quote   Quote?  @relation(fields: [quoteId], references: [id])
-
-  createdById String @map("created_by")
-  createdBy   User   @relation("InvoiceCreator", fields: [createdById], references: [id])
-
-  items     InvoiceItem[]
-  payments  Payment[]
-  projectId String?       @map("project_id")
-  project   Project?      @relation(fields: [projectId], references: [id])
-
-  @@index([number])
-  @@index([status])
-  @@index([companyId])
-  @@index([dueDate])
-  @@map("invoices")
-}
-
-model InvoiceItem {
-  id        String  @id @default(uuid())
-  quantity  Int     @default(1)
-  unitPrice Decimal @default(0) @map("unit_price") @db.Decimal(15, 2)
-  total     Decimal @default(0) @db.Decimal(15, 2)
-
-  invoiceId String  @map("invoice_id")
-  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-
-  materialId String   @map("material_id")
-  material   Material @relation(fields: [materialId], references: [id])
-
-  @@map("invoice_items")
-}
-
-model Payment {
-  id            String        @id @default(uuid())
-  amount        Decimal       @db.Decimal(15, 2)
-  method        PaymentMethod @default(OTHER)
-  reference     String?
-  transactionId String?       @map("transaction_id")
-  notes         String?       @db.Text
-  paidAt        DateTime      @default(now()) @map("paid_at")
-  createdAt     DateTime      @default(now()) @map("created_at")
-
-  invoiceId String  @map("invoice_id")
-  invoice   Invoice @relation(fields: [invoiceId], references: [id])
-
-  @@index([invoiceId])
-  @@index([paidAt])
-  @@map("payments")
-}
-
-model Activity {
-  id          String       @id @default(uuid())
-  type        ActivityType
-  subject     String
-  description String?      @db.Text
-  result      String?      @db.Text
-  duration    Int?         @default(0)
-  scheduledAt DateTime?    @map("scheduled_at")
-  completedAt DateTime?    @map("completed_at")
-  isCompleted Boolean      @default(false) @map("is_completed")
-  createdAt   DateTime     @default(now()) @map("created_at")
-  updatedAt   DateTime     @updatedAt @map("updated_at")
-
-  contactId String?  @map("contact_id")
-  contact   Contact? @relation(fields: [contactId], references: [id])
-
-  opportunityId String?      @map("opportunity_id")
-  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id])
-
-  userId String @map("user_id")
-  user   User   @relation(fields: [userId], references: [id])
-
-  @@index([type])
-  @@index([userId])
-  @@index([contactId])
-  @@index([scheduledAt])
-  @@index([opportunityId])
-  @@map("activities")
-}
-
-model Task {
-  id          String    @id @default(uuid())
-  title       String
-  description String?   @db.Text
-  priority    String    @default("medium")
-  dueDate     DateTime? @map("due_date")
-  completedAt DateTime? @map("completed_at")
-  isCompleted Boolean   @default(false) @map("is_completed")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-
-  userId String @map("user_id")
-  user   User   @relation(fields: [userId], references: [id])
-
-  opportunityId String?      @map("opportunity_id")
-  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id])
-
-  @@index([userId])
-  @@index([dueDate])
-  @@index([isCompleted])
-  @@index([opportunityId])
-  @@map("tasks")
-}
-
-model Message {
-  id        String    @id @default(uuid())
-  channel   String
-  content   String    @db.Text
-  direction String    @default("outbound")
-  status    String    @default("sent")
-  sentAt    DateTime  @default(now()) @map("sent_at")
-  readAt    DateTime? @map("read_at")
-  createdAt DateTime  @default(now()) @map("created_at")
-
-  contactId String  @map("contact_id")
-  contact   Contact @relation(fields: [contactId], references: [id])
-
-  sentById String @map("sent_by")
-  sentBy   User   @relation("MessageSender", fields: [sentById], references: [id])
-
-  @@index([contactId])
-  @@index([channel])
-  @@index([sentAt])
-  @@map("messages")
-}
-
-model CalendarEvent {
-  id             String   @id @default(uuid())
-  title          String
-  description    String?  @db.Text
-  location       String?
-  startDate      DateTime @map("start_date")
-  endDate        DateTime @map("end_date")
-  isAllDay       Boolean  @default(false) @map("is_all_day")
-  color          String?  @default("#3b82f6")
-  googleEventId  String?  @map("google_event_id")
-  outlookEventId String?  @map("outlook_event_id")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
-
-  userId String @map("user_id")
-  user   User   @relation(fields: [userId], references: [id])
-
-  opportunityId String?      @map("opportunity_id")
-  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id])
-
-  @@index([userId])
-  @@index([startDate])
-  @@index([opportunityId])
-  @@map("calendar_events")
-}
-
-model Project {
-  id          String       @id @default(uuid())
-  name        String
-  description String?      @db.Text
-  status      String       @default("pending")
-  phase       ProjectPhase @default(ANTEPROYECTO)
-  progress    Int          @default(0)
-  startDate   DateTime?    @map("start_date")
-  endDate     DateTime?    @map("end_date")
-  budget      Decimal?     @default(0) @db.Decimal(15, 2)
-  createdAt   DateTime     @default(now()) @map("created_at")
-  updatedAt   DateTime     @updatedAt @map("updated_at")
-
-  companyId String  @map("company_id")
-  company   Company @relation(fields: [companyId], references: [id])
-
-  quoteId String? @map("quote_id")
-  quote   Quote?  @relation(fields: [quoteId], references: [id])
-
-  invoices Invoice[]
-
-  @@index([companyId])
-  @@index([status])
-  @@map("projects")
-}
-
-model PipelineStage {
-  id          String   @id @default(uuid())
-  name        String
-  order       Int
-  color       String?  @default("#3b82f6")
-  probability Int      @default(0)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  userId String @map("user_id")
-  user   User   @relation(fields: [userId], references: [id])
-
-  opportunityId String      @map("opportunity_id")
-  opportunity   Opportunity @relation(fields: [opportunityId], references: [id])
-
-  @@map("pipeline_stages")
-}
-
-model Notification {
-  id        String              @id @default(uuid())
-  type      NotificationType
-  title     String
-  message   String              @db.Text
-  channel   NotificationChannel @default(INTERNAL)
-  isRead    Boolean             @default(false) @map("is_read")
-  readAt    DateTime?           @map("read_at")
-  link      String?
-  createdAt DateTime            @default(now()) @map("created_at")
-
-  userId String @map("user_id")
-  user   User   @relation(fields: [userId], references: [id])
-
-  @@index([userId, isRead])
-  @@index([createdAt])
-  @@map("notifications")
-}
-
-model AutomationRule {
-  id          String            @id @default(uuid())
-  name        String
-  description String?           @db.Text
-  trigger     AutomationTrigger
-  action      AutomationAction
-  config      Json              @default("{}")
-  isActive    Boolean           @default(true) @map("is_active")
-  order       Int               @default(0)
-  createdAt   DateTime          @default(now()) @map("created_at")
-  updatedAt   DateTime          @updatedAt @map("updated_at")
-
-  @@index([trigger])
-  @@index([isActive])
-  @@map("automation_rules")
-}
-
-model Integration {
-  id        String    @id @default(uuid())
-  name      String
-  provider  String
-  config    Json      @default("{}")
-  isActive  Boolean   @default(true) @map("is_active")
-  lastSync  DateTime? @map("last_sync")
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-
-  @@index([provider])
-  @@map("integrations")
-}
-
-model AuditLog {
-  id        String   @id @default(uuid())
-  action    String
-  entity    String
-  entityId  String?  @map("entity_id")
-  changes   Json?
-  ipAddress String?  @map("ip_address")
-  userAgent String?  @map("user_agent")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  userId String @map("user_id")
-  user   User   @relation(fields: [userId], references: [id])
-
-  @@index([entity, entityId])
-  @@index([userId])
-  @@index([action])
-  @@index([createdAt])
-  @@map("audit_logs")
-}
-
-model File {
-  id           String       @id @default(uuid())
-  name         String
-  originalName String       @map("original_name")
-  mimeType     String       @map("mime_type")
-  size         Int
-  url          String       @db.Text
-  category     FileCategory @default(DOCUMENT)
-  version      Int          @default(1)
-  metadata     Json?        @default("{}")
-  createdAt    DateTime     @default(now()) @map("created_at")
-  updatedAt    DateTime     @updatedAt @map("updated_at")
-
-  uploadedById String @map("uploaded_by")
-  uploadedBy   User   @relation("FileUploader", fields: [uploadedById], references: [id])
-
-  @@index([category])
-  @@index([uploadedById])
-  @@map("files")
-}
-
-model Tag {
-  id    String  @id @default(uuid())
-  name  String  @unique
-  color String? @default("#3b82f6")
-
-  @@map("tags")
+  BODEGA  @map("bodega")
+  OBRA    @map("obra")
+  GENERAL @map("general")
 }

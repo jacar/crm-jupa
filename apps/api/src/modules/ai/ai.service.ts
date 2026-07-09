@@ -139,24 +139,36 @@ ${senderName}`,
   async searchConstructionPrices(query: string) {
     this.logger.log(`AI Request: searchConstructionPrices - query: ${query}`);
     let apiKey = process.env.XAI_API_KEY || '';
+    let model = 'grok-4.5';
+    let apiUrl = 'https://api.x.ai/v1/chat/completions';
     
     try {
-      const grokIntegration = await this.prisma.integration.findFirst({
-        where: { provider: 'GROK', isActive: true },
+      // First try to find a Groq integration, if not, fallback to Grok
+      let activeIntegration = await this.prisma.integration.findFirst({
+        where: { provider: 'GROQ', isActive: true },
       });
+      
+      if (!activeIntegration) {
+        activeIntegration = await this.prisma.integration.findFirst({
+          where: { provider: 'GROK', isActive: true },
+        });
+      }
 
-      if (grokIntegration && grokIntegration.config) {
-        const config: any = grokIntegration.config;
-        if (config.apiKey) {
-          apiKey = config.apiKey;
+      if (activeIntegration && activeIntegration.config) {
+        const config: any = activeIntegration.config;
+        if (config.apiKey) apiKey = config.apiKey;
+        if (config.model) model = config.model;
+        
+        if (activeIntegration.provider === 'GROQ') {
+          apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
         }
       }
 
       if (!apiKey) {
-        throw new Error('API Key de Grok no configurada');
+        throw new Error('API Key de IA no configurada');
       }
 
-      const response = await fetch('https://api.x.ai/v1/chat/completions', {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -173,14 +185,28 @@ ${senderName}`,
               content: query
             }
           ],
-          model: 'grok-beta',
+          model: model,
           stream: false,
           temperature: 0
         })
       });
 
       if (!response.ok) {
-        throw new Error(`Grok API Error: ${response.status} - ${response.statusText}`);
+        const errorText = await response.text();
+        this.logger.error(`Grok API returned ${response.status}: ${errorText}`);
+        
+        let errorMessage = 'Hubo un error al consultar la API de Grok.';
+        try {
+          const parsed = JSON.parse(errorText);
+          if (parsed.error) {
+            errorMessage = `Error Grok: ${parsed.error}`;
+          }
+        } catch (e) {}
+
+        return {
+          answer: errorMessage,
+          success: false
+        };
       }
 
       const data = await response.json();
@@ -188,10 +214,10 @@ ${senderName}`,
         answer: data.choices[0].message.content,
         success: true
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('Failed to query Grok API', error);
       return {
-        answer: 'Hubo un error al consultar la API de Grok. Por favor, intenta de nuevo más tarde.',
+        answer: error.message || 'Hubo un error al conectar con la API de Grok.',
         success: false
       };
     }

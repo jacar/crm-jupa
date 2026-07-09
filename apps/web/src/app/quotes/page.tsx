@@ -33,7 +33,7 @@ interface Material {
 
 interface QuoteItem {
   id?: number;
-  MaterialId: string;
+  materialId: string;
   quantity: number;
   unitPrice: number;
   MaterialName?: string;
@@ -82,7 +82,7 @@ const STATUS_LABEL: Record<QuoteStatus, string> = {
 
 const STATUS_OPTIONS = Object.entries(STATUS_LABEL).map(([value, label]) => ({ value, label }));
 
-const emptyItem = { MaterialId: '', quantity: 1, unitPrice: 0 };
+const emptyItem = { materialId: '', quantity: 1, unitPrice: 0 };
 
 const emptyForm = {
   title: '',
@@ -177,7 +177,7 @@ export default function QuotesPage() {
     const items = form.items.map((item, i) => {
       if (i !== index) return item;
       const updated = { ...item, [field]: value };
-      if (field === 'MaterialId') {
+      if (field === 'materialId') {
         const Material = Materials.find((p) => String(p.id) === String(value));
         if (Material) {
           updated.unitPrice = Material.price;
@@ -197,7 +197,7 @@ export default function QuotesPage() {
     e.preventDefault();
     if (!form.title.trim()) { toast.error('El título es obligatorio'); return; }
     if (!form.companyId) { toast.error('Selecciona una empresa'); return; }
-    if (form.items.some((item) => item.MaterialId === '')) { toast.error('Completa todos los Materialos'); return; }
+    if (form.items.some((item) => item.materialId === '')) { toast.error('Selecciona un material/servicio para todos los items'); return; }
     setSaving(true);
     try {
       await api.post('/quotes', {
@@ -208,7 +208,7 @@ export default function QuotesPage() {
         notes: form.notes || undefined,
         terms: form.terms || undefined,
         items: form.items.map((item) => ({
-          MaterialId: item.MaterialId,
+          materialId: item.materialId,
           quantity: Number(item.quantity),
           unitPrice: Number(item.unitPrice),
         })),
@@ -475,8 +475,8 @@ export default function QuotesPage() {
                     <div className="flex-1 space-y-1.5">
                       <label className="text-xs font-medium">Proyecto</label>
                       <Select
-                        value={String(item.MaterialId)}
-                        onChange={(e) => updateItem(idx, 'MaterialId', e.target.value)}
+                        value={String(item.materialId)}
+                        onChange={(e) => updateItem(idx, 'materialId', e.target.value)}
                         options={Materials.map((p) => ({ value: String(p.id), label: `${p.name} (${formatCurrency(p.price)})` }))}
                         placeholder="Seleccionar proyecto"
                         className="text-slate-900 dark:text-slate-100"
@@ -582,7 +582,7 @@ export default function QuotesPage() {
                 <tbody>
                   {detailOpen.items.map((item, idx) => (
                     <tr key={idx} className="border-b">
-                      <td className="p-2">{item.MaterialName || `Proyecto #${item.MaterialId}`}</td>
+                      <td className="p-2">{item.MaterialName || `Proyecto #${item.materialId}`}</td>
                       <td className="p-2 text-right">{item.quantity}</td>
                       <td className="p-2 text-right">{formatCurrency(item.unitPrice)}</td>
                       <td className="p-2 text-right font-medium">{formatCurrency(item.quantity * item.unitPrice)}</td>

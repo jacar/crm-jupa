@@ -30,19 +30,20 @@ export default function WhatsappSettingsPage() {
     };
     fetchStatus();
 
-    const newSocket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/whatsapp', {
-      transports: ['websocket'],
-    });
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const wsUrl = apiUrl.replace('/api', '') + '/whatsapp';
+    
+    const newSocket = io(wsUrl);
 
     newSocket.on('status', (newStatus) => {
-      setStatus(newStatus);
-      if (newStatus === 'connected') {
-        setQrCode(null);
-        toast.success('WhatsApp vinculado exitosamente');
-        setTimeout(() => {
+      setStatus((prev) => {
+        if (prev !== 'connected' && newStatus === 'connected') {
+          setQrCode(null);
+          toast.success('WhatsApp vinculado exitosamente');
           router.push('/whatsapp');
-        }, 1500);
-      }
+        }
+        return newStatus;
+      });
     });
 
     newSocket.on('qr', (qr) => {

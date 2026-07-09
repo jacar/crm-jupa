@@ -4,32 +4,32 @@ import { useAuth } from '@/providers/auth-provider';
 import { useSidebar } from '@/store/use-sidebar';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Bell, Moon, Sun, Menu } from 'lucide-react';
+import { Bell, Moon, Sun, Menu, LogOut } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 
 import { GrokAssistant } from '@/components/ai/GrokAssistant';
 
 export function Header() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { toggle } = useSidebar();
   const { theme, setTheme } = useTheme();
 
   return (
     <header 
-      className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-white/10 px-4 lg:px-6 shadow-sm"
+      className="sticky top-0 z-30 flex h-32 items-center gap-4 border-b border-white/10 px-4 lg:px-6 shadow-sm"
       style={{ backgroundColor: 'rgb(12 12 12 / 90%)', backdropFilter: 'blur(8px)', color: 'white' }}
     >
       <Button variant="ghost" size="icon" onClick={toggle} className="text-white hover:text-white/80 hover:bg-white/10">
         <Menu className="h-5 w-5" />
       </Button>
 
-      <div className="flex flex-1 items-center justify-center">
-        <Link href="/dashboard" className="transition-opacity hover:opacity-80">
+      <div className="flex flex-1 items-center justify-center h-full py-2">
+        <Link href="/dashboard" className="transition-opacity hover:opacity-80 h-full flex items-center">
           <img 
             src="https://jupaarquitectura.com/img/logo.svg" 
             alt="JUPA Arquitectura" 
-            className="w-[250px] h-auto" 
+            className="h-full w-auto object-contain scale-[1.35] origin-center" 
             style={{ filter: 'brightness(0) invert(1)' }}
           />
         </Link>
@@ -74,6 +74,10 @@ export function Header() {
             </AvatarFallback>
           </Avatar>
         </Link>
+        
+        <Button variant="ghost" size="icon" onClick={logout} title="Cerrar sesión" className="text-red-400 hover:text-red-300 hover:bg-white/10 ml-2">
+          <LogOut className="h-5 w-5" />
+        </Button>
       </div>
     </header>
   );

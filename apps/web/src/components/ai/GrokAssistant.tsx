@@ -30,6 +30,8 @@ export function GrokAssistant() {
       const { data } = await api.post('/ai/search-construction-prices', { query: userMessage });
       if (data && data.success) {
         setMessages(prev => [...prev, { role: 'assistant', content: data.answer }]);
+      } else if (data && data.answer) {
+        setMessages(prev => [...prev, { role: 'assistant', content: data.answer }]);
       } else {
         setMessages(prev => [...prev, { role: 'assistant', content: 'Hubo un error al procesar tu consulta.' }]);
       }

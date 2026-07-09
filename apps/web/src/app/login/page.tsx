@@ -29,40 +29,77 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
-      <Card className="w-full max-w-md animate-in">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">CRM Jupa</CardTitle>
-          <CardDescription>Ingresa tus credenciales para acceder</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Email</label>
-              <Input
-                type="email"
-                placeholder="correo@ejemplo.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Contraseña</label>
-              <Input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Ingresando...' : 'Iniciar Sesión'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+    <div className="flex min-h-screen bg-[#E8E6DF]">
+      {/* Columna Izquierda: Imagen */}
+      <div className="hidden lg:block lg:w-1/2 relative bg-black">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: 'url("https://www.jupaarquitectura.com/img/Juan%20P.webp")' }}
+        />
+        {/* Un leve gradiente oscuro para que no se vea tan plana, opcional */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+      </div>
+
+      {/* Columna Derecha: Formulario */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+        <Card className="w-full max-w-md animate-in bg-white shadow-2xl border-0 overflow-hidden">
+          
+          {/* Cabecera con Logo y Franja Oscura */}
+          <div 
+            className="w-full py-10 flex flex-col justify-center items-center gap-4"
+            style={{ backgroundColor: 'rgba(12, 12, 12, 0.78)' }}
+          >
+            <img 
+              src="https://www.jupaarquitectura.com/img/logo.svg" 
+              alt="Jupa Arquitectura Logo" 
+              className="h-[200px] w-auto object-contain"
+              style={{ filter: 'brightness(0) invert(1)' }}
+            />
+            <h1 className="text-white text-xl font-semibold tracking-widest uppercase">
+              CRM JUPA Arquitectura
+            </h1>
+          </div>
+
+          <CardHeader className="text-center pt-8 pb-4">
+            <CardDescription className="text-slate-500 text-base">Ingresa tus credenciales para continuar</CardDescription>
+          </CardHeader>
+          
+          <CardContent className="pb-8 px-8">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-700">Email</label>
+                <Input
+                  type="email"
+                  placeholder="correo@ejemplo.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="bg-slate-50 border-slate-200 focus-visible:ring-slate-400"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-700">Contraseña</label>
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="bg-slate-50 border-slate-200 focus-visible:ring-slate-400"
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-6 mt-4" disabled={loading}>
+                {loading ? 'Ingresando...' : 'Iniciar Sesión'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <div className="absolute bottom-6 text-center text-xs text-slate-500 w-full lg:w-1/2">
+          <p>Todos los derechos reservados JUPA ARQUITECTURA 2026</p>
+          <p>Desarrollo FOCUS CREATIVE</p>
+        </div>
+      </div>
     </div>
   );
 }

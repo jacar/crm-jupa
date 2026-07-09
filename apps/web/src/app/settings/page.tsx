@@ -238,11 +238,11 @@ function PerfilTab() {
           </div>
           <div>
             <label className="text-sm font-medium text-muted-foreground">Rol</label>
-            <p className="text-sm">
+            <div className="text-sm mt-1">
               <Badge variant={ROLE_BADGE[user.role] || 'outline'}>
                 {ROLES.find((r) => r.value === user.role)?.label || user.role}
               </Badge>
-            </p>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -538,9 +538,10 @@ function IntegracionesTab() {
   const [showCreate, setShowCreate] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    name: 'Grok AI',
-    provider: 'GROK',
+    name: 'Groq AI',
+    provider: 'GROQ',
     apiKey: '',
+    model: 'llama-3.3-70b-versatile',
   });
 
   const fetchIntegrations = useCallback(async () => {
@@ -566,12 +567,12 @@ function IntegracionesTab() {
       await api.post('/integrations', {
         name: form.name,
         provider: form.provider,
-        config: { apiKey: form.apiKey },
+        config: { apiKey: form.apiKey, model: form.model },
         isActive: true,
       });
       toast.success('Integración creada');
       setShowCreate(false);
-      setForm({ name: 'Grok AI', provider: 'GROK', apiKey: '' });
+      setForm({ name: 'Groq AI', provider: 'GROQ', apiKey: '', model: 'llama-3.3-70b-versatile' });
       fetchIntegrations();
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Error al crear integración');
@@ -647,7 +648,8 @@ function IntegracionesTab() {
                 <div>
                   <p className="text-sm font-medium">{integration.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {(integration as any).provider || integration.type || 'GROK'}
+                    {(integration as any).provider || integration.type || 'GROQ'}
+                    {integration.config?.model ? ` (${integration.config.model})` : ''}
                   </p>
                 </div>
               </div>
@@ -689,7 +691,7 @@ function IntegracionesTab() {
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   required
-                  placeholder="Ej: Grok AI"
+                  placeholder="Ej: Groq AI"
                 />
               </div>
               <div className="space-y-1.5">
@@ -698,7 +700,7 @@ function IntegracionesTab() {
                   value={form.provider}
                   onChange={(e) => setForm({ ...form, provider: e.target.value })}
                   required
-                  placeholder="Ej: GROK"
+                  placeholder="Ej: GROQ"
                 />
               </div>
               <div className="space-y-1.5">
@@ -708,9 +710,38 @@ function IntegracionesTab() {
                   value={form.apiKey}
                   onChange={(e) => setForm({ ...form, apiKey: e.target.value })}
                   required
-                  placeholder="xoxb-..."
+                  placeholder="Clave API (gsk_...)"
                 />
               </div>
+              {(form.provider === 'GROK' || form.provider === 'GROQ') && (
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Modelo a utilizar (Opcional)</label>
+                  {form.provider === 'GROQ' ? (
+                    <Select
+                      value={form.model}
+                      onChange={(e) => setForm({ ...form, model: e.target.value })}
+                      options={[
+                        { value: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B (Rápido y Potente)' },
+                        { value: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B (Ultra Rápido)' },
+                        { value: 'mixtral-8x7b-32768', label: 'Mixtral 8x7B' }
+                      ]}
+                    />
+                  ) : (
+                    <Select
+                      value={form.model}
+                      onChange={(e) => setForm({ ...form, model: e.target.value })}
+                      options={[
+                        { value: 'grok-4.5', label: 'grok-4.5 (Recomendado)' },
+                        { value: 'grok-beta', label: 'grok-beta' },
+                        { value: 'grok-vision-beta', label: 'grok-vision-beta' },
+                        { value: 'grok-2-latest', label: 'grok-2-latest' },
+                        { value: 'grok-1', label: 'grok-1' }
+                      ]}
+                    />
+                  )}
+                  <p className="text-xs text-muted-foreground">Selecciona el modelo que deseas usar para la inteligencia artificial.</p>
+                </div>
+              )}
               <div className="flex justify-end gap-2 pt-2">
                 <Button type="button" variant="outline" onClick={() => setShowCreate(false)}>
                   Cancelar

@@ -246,8 +246,8 @@ export class QuotesService {
 
   async generatePdf(id: string) {
     const quote = await this.findOne(id);
-    const filePath = await this.pdfService.generateQuotePdf(quote);
-    return { message: 'PDF generado exitosamente', quoteId: id, filePath };
+    const buffer = await this.pdfService.generateQuotePdfBuffer(quote);
+    return buffer;
   }
 
   async sendEmail(id: string) {

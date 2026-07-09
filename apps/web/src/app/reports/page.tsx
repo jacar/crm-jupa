@@ -242,8 +242,8 @@ export default function ReportsPage() {
                       </tr>
                     ) : (
                       users.map((u, i) => (
-                        <tr key={u.user} className="border-b hover:bg-muted/30 transition-colors">
-                          <td className="p-3 font-medium">{u.user}</td>
+                        <tr key={`${u.user}-${i}`} className="border-b hover:bg-muted/30 transition-colors">
+                          <td className="p-3 font-medium">{u.user || 'Desconocido'}</td>
                           <td className="p-3 text-center"><Badge variant="secondary">{u.activities}</Badge></td>
                           <td className="p-3 text-center"><Badge variant="secondary">{u.tasks}</Badge></td>
                           <td className="p-3 text-center"><Badge variant="secondary">{u.deals}</Badge></td>

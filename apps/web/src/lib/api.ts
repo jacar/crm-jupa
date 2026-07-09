@@ -18,14 +18,14 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => {
     // Unwrap TransformInterceptor wrapper: { success, data, timestamp } → data
-    if (response.data && typeof response.data === 'object' && 'success' in response.data) {
+    if (response.data && typeof response.data === 'object' && 'success' in response.data && 'data' in response.data) {
       response.data = response.data.data;
     }
     return response;
   },
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry && originalRequest.url !== '/auth/refresh') {
       originalRequest._retry = true;
       try {
         const refreshToken = localStorage.getItem('refreshToken');
