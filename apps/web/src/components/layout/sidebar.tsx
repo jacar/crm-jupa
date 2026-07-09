@@ -20,6 +20,9 @@ import {
   ChevronLeft,
   Activity,
   Phone,
+  BrainCircuit,
+  Archive,
+  FolderOpen,
 } from 'lucide-react';
 
 const menuItems = [
@@ -31,9 +34,12 @@ const menuItems = [
   { icon: FileText, label: 'Presupuestos', href: '/quotes' },
   { icon: Receipt, label: 'Facturas', href: '/invoices' },
   { icon: Package, label: 'Materiales', href: '/materials' },
+  { icon: Archive, label: 'Inventario', href: '/inventory' },
   { icon: Activity, label: 'Actividades', href: '/activities' },
   { icon: Calendar, label: 'Calendario', href: '/calendar' },
   { icon: BarChart3, label: 'Reportes', href: '/reports' },
+  { icon: FolderOpen, label: 'Archivos Drive', href: '/drive' },
+  { icon: BrainCircuit, label: 'Búsqueda IA', href: '/ai-search' },
   { icon: Bell, label: 'Notificaciones', href: '/notifications' },
   { icon: Phone, label: 'WhatsApp', href: '/whatsapp' },
   { icon: Settings, label: 'Configuración', href: '/settings' },

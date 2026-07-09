@@ -25,11 +25,11 @@ export function Header() {
       </Button>
 
       <div className="flex flex-1 items-center justify-center">
-        <Link href="https://jupaarquitectura.com/" target="_blank" rel="noopener noreferrer" className="transition-opacity hover:opacity-80">
+        <Link href="/dashboard" className="transition-opacity hover:opacity-80">
           <img 
             src="https://jupaarquitectura.com/img/logo.svg" 
             alt="JUPA Arquitectura" 
-            className="h-16 md:h-24" 
+            className="w-[250px] h-auto" 
             style={{ filter: 'brightness(0) invert(1)' }}
           />
         </Link>

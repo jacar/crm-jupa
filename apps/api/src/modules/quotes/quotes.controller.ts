@@ -74,9 +74,13 @@ export class QuotesController {
 
   @Get(':id/pdf/download')
   @ApiOperation({ summary: 'Download PDF for quote' })
-  async downloadPdf(@Param('id') id: string, @Request() req: any, @Res() res: any) {
-    const { filePath } = await this.quotesService.generatePdf(id);
-    return res.download(filePath);
+  async downloadPdf(@Param('id') id: string, @Res() res: any) {
+    try {
+      const { filePath } = await this.quotesService.generatePdf(id);
+      res.download(filePath);
+    } catch (error) {
+      res.status(500).json({ message: 'Error al generar el PDF', error: error.message });
+    }
   }
 
   @Post(':id/send-email')
