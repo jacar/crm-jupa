@@ -40,7 +40,7 @@ export class WhatsappService implements OnModuleInit, OnModuleDestroy {
           '--no-zygote',
           '--disable-gpu'
         ],
-        executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+        executablePath: process.env.NODE_ENV === 'production' ? '/usr/bin/chromium-browser' : 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
       },
       webVersionCache: {
         type: 'remote',
