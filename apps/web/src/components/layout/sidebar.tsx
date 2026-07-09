@@ -51,7 +51,11 @@ export function Sidebar() {
       )}
     >
       <div className="flex h-14 items-center justify-between border-b px-4">
-        {isOpen && <span className="text-lg font-bold">CRM Jupa</span>}
+        {isOpen && (
+          <Link href="/dashboard" className="text-lg font-bold hover:text-primary transition-colors">
+            CRM Jupa
+          </Link>
+        )}
         <button onClick={toggle} className="rounded-lg p-1.5 hover:bg-accent">
           <ChevronLeft className={cn('h-5 w-5 transition-transform', !isOpen && 'rotate-180')} />
         </button>
