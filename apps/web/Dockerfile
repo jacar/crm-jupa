@@ -7,6 +7,8 @@ COPY package*.json ./
 COPY apps/api/package*.json ./apps/api/
 COPY apps/web/package*.json ./apps/web/
 
+# Skip Puppeteer Chrome download to save disk space
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN npm install
 
 # Copiar cdigo fuente
