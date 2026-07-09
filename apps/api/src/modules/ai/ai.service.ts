@@ -1,8 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '../../common/prisma.service';
 
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
+
+  constructor(private readonly prisma: PrismaService) {}
 
   private async simulateDelay(): Promise<void> {
     const delay = 1000 + Math.floor(Math.random() * 1000);
@@ -135,9 +138,24 @@ ${senderName}`,
 
   async searchConstructionPrices(query: string) {
     this.logger.log(`AI Request: searchConstructionPrices - query: ${query}`);
-    const apiKey = process.env.XAI_API_KEY || '';
+    let apiKey = process.env.XAI_API_KEY || '';
     
     try {
+      const grokIntegration = await this.prisma.integration.findFirst({
+        where: { provider: 'GROK', isActive: true },
+      });
+
+      if (grokIntegration && grokIntegration.config) {
+        const config: any = grokIntegration.config;
+        if (config.apiKey) {
+          apiKey = config.apiKey;
+        }
+      }
+
+      if (!apiKey) {
+        throw new Error('API Key de Grok no configurada');
+      }
+
       const response = await fetch('https://api.x.ai/v1/chat/completions', {
         method: 'POST',
         headers: {

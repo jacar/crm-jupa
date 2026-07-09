@@ -535,6 +535,13 @@ function IntegracionesTab() {
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
   const [testingId, setTestingId] = useState<string | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    name: 'Grok AI',
+    provider: 'GROK',
+    apiKey: '',
+  });
 
   const fetchIntegrations = useCallback(async () => {
     setLoading(true);
@@ -551,6 +558,27 @@ function IntegracionesTab() {
   useEffect(() => {
     fetchIntegrations();
   }, [fetchIntegrations]);
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await api.post('/integrations', {
+        name: form.name,
+        provider: form.provider,
+        config: { apiKey: form.apiKey },
+        isActive: true,
+      });
+      toast.success('Integración creada');
+      setShowCreate(false);
+      setForm({ name: 'Grok AI', provider: 'GROK', apiKey: '' });
+      fetchIntegrations();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Error al crear integración');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const toggleIntegration = async (integration: Integration) => {
     try {
@@ -588,6 +616,12 @@ function IntegracionesTab() {
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button onClick={() => setShowCreate(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Nueva Integración
+        </Button>
+      </div>
       {integrations.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground">
@@ -612,7 +646,9 @@ function IntegracionesTab() {
                 </div>
                 <div>
                   <p className="text-sm font-medium">{integration.name}</p>
-                  <p className="text-xs text-muted-foreground">{integration.type}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {(integration as any).provider || integration.type || 'GROK'}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -640,6 +676,52 @@ function IntegracionesTab() {
             </CardContent>
           </Card>
         ))
+      )}
+
+      {showCreate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-lg rounded-xl border bg-card p-6 shadow-lg">
+            <h2 className="mb-4 text-lg font-semibold">Nueva Integración</h2>
+            <form onSubmit={handleCreate} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Nombre *</label>
+                <Input
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  required
+                  placeholder="Ej: Grok AI"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Proveedor *</label>
+                <Input
+                  value={form.provider}
+                  onChange={(e) => setForm({ ...form, provider: e.target.value })}
+                  required
+                  placeholder="Ej: GROK"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">API Key *</label>
+                <Input
+                  type="password"
+                  value={form.apiKey}
+                  onChange={(e) => setForm({ ...form, apiKey: e.target.value })}
+                  required
+                  placeholder="xoxb-..."
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" onClick={() => setShowCreate(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={saving}>
+                  {saving ? 'Creando...' : 'Crear Integración'}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
