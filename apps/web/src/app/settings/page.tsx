@@ -538,10 +538,10 @@ function IntegracionesTab() {
   const [showCreate, setShowCreate] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    name: 'Asistente Grok',
-    provider: 'GROK',
+    name: 'Asistente Groq',
+    provider: 'GROQ',
     apiKey: '',
-    model: 'grok-4.5',
+    model: 'llama-3.3-70b-versatile',
   });
 
   const fetchIntegrations = useCallback(async () => {
@@ -572,7 +572,7 @@ function IntegracionesTab() {
       });
       toast.success('Integración creada');
       setShowCreate(false);
-      setForm({ name: 'Asistente Grok', provider: 'GROK', apiKey: '', model: 'grok-4.5' });
+      setForm({ name: 'Asistente Groq', provider: 'GROQ', apiKey: '', model: 'llama-3.3-70b-versatile' });
       fetchIntegrations();
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Error al crear integración');
@@ -691,17 +691,18 @@ function IntegracionesTab() {
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   required
-                  placeholder="Ej: Asistente Grok"
+                  placeholder="Ej: Asistente Groq"
                 />
               </div>
+              {/* Proveedor hardcoded a GROQ */}
               <div className="space-y-1.5">
-                <label className="text-sm font-medium">API Key de Grok *</label>
+                <label className="text-sm font-medium">API Key de Groq *</label>
                 <Input
                   type="password"
                   value={form.apiKey}
                   onChange={(e) => setForm({ ...form, apiKey: e.target.value })}
                   required
-                  placeholder="Pega aquí tu llave de xAI (xai-...) o de OpenRouter (sk-or-...)"
+                  placeholder="Pega aquí tu llave de Groq (gsk_...)"
                 />
               </div>
               <div className="space-y-1.5">
@@ -710,11 +711,9 @@ function IntegracionesTab() {
                   value={form.model}
                   onChange={(e) => setForm({ ...form, model: e.target.value })}
                   options={[
-                    { value: 'grok-4.5', label: 'grok-4.5 (Recomendado)' },
-                    { value: 'grok-beta', label: 'grok-beta' },
-                    { value: 'grok-vision-beta', label: 'grok-vision-beta' },
-                    { value: 'grok-2-latest', label: 'grok-2-latest' },
-                    { value: 'grok-1', label: 'grok-1' }
+                    { value: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B (Rápido y Potente)' },
+                    { value: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B (Ultra Rápido)' },
+                    { value: 'mixtral-8x7b-32768', label: 'Mixtral 8x7B' }
                   ]}
                 />
                 <p className="text-xs text-muted-foreground">Selecciona el modelo que deseas usar para la inteligencia artificial.</p>
