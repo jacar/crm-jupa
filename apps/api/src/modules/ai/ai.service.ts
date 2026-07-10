@@ -195,11 +195,12 @@ ${senderName}`,
         const errorText = await response.text();
         this.logger.error(`Grok API returned ${response.status}: ${errorText}`);
         
-        let errorMessage = 'Hubo un error al consultar la API de Grok.';
+        let errorMessage = 'Hubo un error al consultar la API de IA.';
         try {
           const parsed = JSON.parse(errorText);
           if (parsed.error) {
-            errorMessage = `Error Grok: ${parsed.error}`;
+            const errStr = typeof parsed.error === 'object' ? (parsed.error.message || JSON.stringify(parsed.error)) : parsed.error;
+            errorMessage = `Error de IA: ${errStr}`;
           }
         } catch (e) {}
 
