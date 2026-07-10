@@ -29,19 +29,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#E8E6DF]">
-      {/* Columna Izquierda: Imagen */}
-      <div className="hidden lg:block lg:w-1/2 relative bg-black">
+    <div className="flex min-h-screen bg-[#E8E6DF] relative">
+      {/* Columna Izquierda / Fondo General: Imagen */}
+      <div className="absolute inset-0 lg:relative lg:w-1/2 bg-black z-0">
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 lg:opacity-100"
           style={{ backgroundImage: 'url("https://www.jupaarquitectura.com/img/Juan%20P.webp")' }}
         />
-        {/* Un leve gradiente oscuro para que no se vea tan plana, opcional */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 lg:from-black/40 to-transparent" />
       </div>
 
       {/* Columna Derecha: Formulario */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 z-10 relative">
         <Card className="w-full max-w-md animate-in bg-white shadow-2xl border-0 overflow-hidden">
           
           {/* Cabecera con Logo y Franja Oscura */}
