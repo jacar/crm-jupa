@@ -143,16 +143,10 @@ ${senderName}`,
     let apiUrl = 'https://api.x.ai/v1/chat/completions';
     
     try {
-      // First try to find a Groq integration, if not, fallback to Grok
       let activeIntegration = await this.prisma.integration.findFirst({
-        where: { provider: 'GROQ', isActive: true },
+        where: { provider: { in: ['GROK', 'GROQ'] }, isActive: true },
+        orderBy: { createdAt: 'desc' },
       });
-      
-      if (!activeIntegration) {
-        activeIntegration = await this.prisma.integration.findFirst({
-          where: { provider: 'GROK', isActive: true },
-        });
-      }
 
       if (activeIntegration && activeIntegration.config) {
         const config: any = activeIntegration.config;
