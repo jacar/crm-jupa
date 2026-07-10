@@ -153,7 +153,15 @@ ${senderName}`,
         if (config.apiKey) apiKey = config.apiKey;
         if (config.model) model = config.model;
         
-        if (activeIntegration.provider === 'GROQ') {
+        // Auto-detect provider based on API key prefix to prevent configuration errors
+        if (apiKey.startsWith('gsk_')) {
+          apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
+        } else if (apiKey.startsWith('sk-or-v1')) {
+          apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
+        } else if (apiKey.startsWith('xai-')) {
+          apiUrl = 'https://api.x.ai/v1/chat/completions';
+        } else if (activeIntegration.provider === 'GROQ') {
+          // Fallback if it's unrecognized but they selected GROQ
           apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
         }
       }
